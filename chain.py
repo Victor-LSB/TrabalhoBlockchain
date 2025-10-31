@@ -51,7 +51,6 @@ def valid_chain(chain: List[Block]):
             return False
         
         # Recalcula o hash do bloco para garantir que não foi adulterado
-        # (Esta parte é opcional para este problema, mas é uma boa prática)
         # if hash_block(block) != block.hash:
         #    return False
 
