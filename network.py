@@ -64,8 +64,21 @@ def handle_client(
 ):
     try:
         data = conn.recv(4096).decode()
+        if not data:
+            conn.close()
+            return
+
         msg = json.loads(data)
-        if msg["type"] == "block":
+
+        # NOVO: Responde a quem pedir a blockchain
+        if msg["type"] == "get_chain":
+            response = {
+                "length": len(blockchain),
+                "chain": [b.as_dict() for b in blockchain],
+            }
+            conn.send(json.dumps(response).encode())
+
+        elif msg["type"] == "block":
             block = create_block_from_dict(msg["data"])
             expected_hash = hash_block(block)
             if (
@@ -78,6 +91,7 @@ def handle_client(
                 print(f"[✓] New valid block added from {addr}")
             else:
                 print(f"[!] Invalid block received from {addr}")
+
         elif msg["type"] == "tx":
             tx = msg["data"]
             if tx not in transactions:

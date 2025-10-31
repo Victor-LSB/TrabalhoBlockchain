@@ -7,6 +7,8 @@ from chain import (
     mine_block,
     on_valid_block_callback,
     print_chain,
+    resolve_conflicts,
+    save_chain,
 )
 from network import start_server
 from utils import load_config
@@ -40,50 +42,60 @@ if __name__ == "__main__":
     )
 
     print("=== SimpleCoin CLI ===")
-    while True:
-        print("\n1. Add transaction")
-        print("2. Mine block")
-        print("3. View blockchain")
-        print("4. Get balance")
-        print("5. Exit")
-        choice = input("> ").strip()
+while True:
+    print("\n1. Add transaction")
+    print("2. Mine block")
+    print("3. View blockchain")
+    print("4. Get balance")
+    print("5. Resolve conflicts") # NOVA OPCAO 
+    print("6. Exit")             
+    choice = input("> ").strip()
 
-        if choice == "1":
-            sender = input("Sender: ")
-            recipient = input("Recipient: ")
-            amount = input("Amount: ")
-            make_transaction(
-                sender,
-                recipient,
-                amount,
-                transactions,
-                config["peers_file"],
-                config["port"],
-            )
+    if choice == "1":
+        sender = input("Sender: ")
+        recipient = input("Recipient: ")
+        amount = input("Amount: ")
+        make_transaction(
+            sender,
+            recipient,
+            amount,
+            transactions,
+            config["peers_file"],
+            config["port"],
+        )
 
-        elif choice == "2":
-            mine_block(
-                transactions,
-                blockchain,
-                config["node_id"],
-                config["reward"],
-                config["difficulty"],
-                config["blockchain_file"],
-                config["peers_file"],
-                config["port"],
-            )
+    elif choice == "2":
+        # CHAMADA DE RESOLUCAO ANTES DE MINERAR
+        print("[i] Resolving conflicts before mining...")
+        blockchain = resolve_conflicts(config["peers_file"], config["port"], blockchain)
+        save_chain(config["blockchain_file"], blockchain) # Salva caso tenha atualizado
 
-        elif choice == "3":
-            print_chain(blockchain)
+        mine_block(
+            transactions,
+            blockchain,
+            config["node_id"],
+            config["reward"],
+            config["difficulty"],
+            config["blockchain_file"],
+            config["peers_file"],
+            config["port"],
+        )
 
-        elif choice == "4":
-            node_id = input("Node ID: ")
-            balance = get_balance(node_id, blockchain)
-            print(f"[i] The balance of {node_id} is {balance}.")
+    elif choice == "3":
+        print_chain(blockchain)
 
-        elif choice == "5":
-            print("Exiting...")
-            break
+    elif choice == "4":
+        node_id = input("Node ID: ")
+        balance = get_balance(node_id, blockchain)
+        print(f"[i] The balance of {node_id} is {balance}.")
 
-        else:
-            print("[!] Invalid choice.")
+    elif choice == "5": # NOVA OPCAO
+        blockchain = resolve_conflicts(config["peers_file"], config["port"], blockchain)
+        save_chain(config["blockchain_file"], blockchain)
+
+    elif choice == "6": 
+        print("Exiting...")
+        break
+
+    else:
+        print("[!] Invalid choice.")
